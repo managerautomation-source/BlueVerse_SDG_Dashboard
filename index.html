@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlueVerse – SDG Impact Dashboard (Prototype)</title>
+<style>
+:root{--navy:#0B2545;--blue:#1E6FD9;--blue-l:#E8F1FC;--green:#2E7D32;--green-l:#E8F5E9;--amber:#B26A00;--amber-l:#FFF4E0;--red:#C62828;--red-l:#FDECEC;--grey:#5B6675;--line:#E3E8EF;--bg:#F5F7FA;--card:#fff;--text:#1A2433}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+header{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:19px;margin:0;font-weight:600}
+header .sub{font-size:13px;opacity:.8}
+.live{display:flex;align-items:center;gap:8px;font-size:13px;margin-left:auto}
+.dot{width:10px;height:10px;border-radius:50%;background:#4CAF50;box-shadow:0 0 0 0 rgba(76,175,80,.7);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(76,175,80,.7)}70%{box-shadow:0 0 0 9px rgba(76,175,80,0)}100%{box-shadow:0 0 0 0 rgba(76,175,80,0)}}
+.btn{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;padding:14px 24px;background:#fff;border-bottom:1px solid var(--line);align-items:center}
+.filters label{font-size:12px;color:var(--grey);display:block;margin-bottom:3px}
+select{font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;min-width:150px}
+main{padding:20px 24px 40px;max-width:1400px;margin:0 auto}
+.note{background:var(--amber-l);color:#7A4A00;border:1px solid #F3D9A8;border-radius:10px;padding:10px 14px;font-size:13.5px;margin-bottom:16px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tile .l{font-size:13px;color:var(--grey)}
+.tile .v{font-size:24px;font-weight:600;margin-top:4px;transition:color .4s}
+.tile .v.flash{color:var(--blue)}
+.tile .s{font-size:12.5px;color:var(--grey);margin-top:2px}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0 14px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 14px;font-size:13.5px;cursor:pointer}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.legend{margin-left:auto;font-size:12.5px;color:var(--grey);display:flex;gap:14px}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.legend .lv::before{background:var(--blue)} .legend .pd::before{background:#8E7CC3}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;gap:14px;cursor:pointer;transition:border-color .2s,transform .2s}
+.card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.icon{width:92px;height:92px;flex:none;border-radius:50%;background:var(--blue-l);border:2px solid #BBD4F5;display:flex;align-items:center;justify-content:center;position:relative;color:var(--blue)}
+.icon svg{width:46px;height:46px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.icon .num{position:absolute;top:-4px;left:-4px;background:var(--navy);color:#fff;font-size:12.5px;font-weight:700;border-radius:12px;padding:2px 8px}
+.icon.per{background:#F0ECFA;border-color:#D6CDF0;color:#5B4A99}
+.cbody{flex:1;min-width:0}
+.ctop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.gname{font-size:14px;font-weight:600;color:var(--navy)}
+.tg{font-size:12px;color:var(--grey);margin-top:2px}
+.badge{font-size:11.5px;padding:3px 9px;border-radius:12px;white-space:nowrap;font-weight:600}
+.ok{background:var(--green-l);color:var(--green)} .watch{background:var(--amber-l);color:var(--amber)} .risk{background:var(--red-l);color:var(--red)}
+.kpi{font-size:22px;font-weight:600;margin:8px 0 2px;transition:color .4s}
+.kpi.flash{color:var(--blue)}
+.ksub{font-size:13px;color:var(--grey)}
+.src{display:inline-block;margin-top:8px;font-size:11.5px;padding:2px 8px;border-radius:10px}
+.src.live{background:var(--blue-l);color:var(--blue)} .src.per{background:#F0ECFA;color:#5B4A99}
+.spark{margin-top:6px}
+/* detail */
+.overlay{display:none;position:fixed;inset:0;background:rgba(11,37,69,.45);z-index:50;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+.overlay.open{display:flex}
+.panel{background:#fff;border-radius:14px;max-width:880px;width:100%;padding:22px 24px;position:relative}
+.panel h2{margin:0;font-size:20px;color:var(--navy)}
+.close{position:absolute;right:16px;top:14px;border:none;background:none;font-size:26px;cursor:pointer;color:var(--grey)}
+.phead{display:flex;gap:16px;align-items:center;margin-bottom:14px}
+.sec{margin-top:18px}
+.sec h3{font-size:15px;margin:0 0 8px;color:var(--navy)}
+.targets div{background:var(--bg);border-radius:8px;padding:9px 12px;margin-bottom:6px;font-size:13.5px}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.m{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.m .l{font-size:12.5px;color:var(--grey)} .m .v{font-size:19px;font-weight:600;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
+th{color:var(--grey);font-weight:600;font-size:12.5px}
+a.dl{color:var(--blue);text-decoration:none;font-weight:600}
+.method{font-size:13.5px;color:#334;background:var(--blue-l);border-radius:8px;padding:10px 12px}
+form .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:10px}
+input{font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;width:100%}
+.ok-msg{color:var(--green);font-size:13.5px;margin-left:10px}
+footer{font-size:12px;color:var(--grey);text-align:center;padding:10px 24px 30px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>BlueVerse SDG Impact Dashboard</h1>
+    <div class="sub" id="scopeLbl">Monitoring: All companies · India · Month to date</div>
+  </div>
+  <div class="live"><span class="dot"></span><span id="upd">Live · updated just now</span></div>
+  <button class="btn" onclick="openEntry()">+ Social activity entry</button>
+  <button class="btn" onclick="window.print()">Download SDG report</button>
+</header>
+
+<div class="filters">
+  <div><label>Company</label><select id="fCo" onchange="scope()"><option>All companies</option><option>Hero dealerships</option><option>TVS dealerships</option><option>BlueVerse B2C outlets</option></select></div>
+  <div><label>State</label><select id="fSt" onchange="scope()"><option>All states</option><option>Maharashtra</option><option>Gujarat</option><option>Karnataka</option></select></div>
+  <div><label>Segment</label><select id="fSeg" onchange="scope()"><option>B2B and B2C</option><option>B2B</option><option>B2C</option></select></div>
+  <div><label>Date range</label><select id="fDt" onchange="scope()"><option>Month to date</option><option>Last 7 days</option><option>Quarter to date</option><option>Financial year to date</option></select></div>
+</div>
+
+<main>
+  <div class="note"><b>Prototype with demo values.</b> Round symbols are BlueVerse interim symbols. They will be replaced by the official UN SDG icons, unaltered, after written permission from the UN (sdgpermissions@un.org). Values here change every 5 seconds to show live behaviour. In production they refresh every 60 seconds from Frappe wash data.</div>
+
+  <div class="tiles">
+    <div class="tile"><div class="l">SDGs contributed to</div><div class="v">11 of 17</div><div class="s">14 UN targets mapped</div></div>
+    <div class="tile"><div class="l">Total washes</div><div class="v" id="tWash">–</div><div class="s">IoT-recorded</div></div>
+    <div class="tile"><div class="l">Water recycled</div><div class="v" id="tRec">–</div><div class="s" id="tRecS">–</div></div>
+    <div class="tile"><div class="l">CO₂ emitted</div><div class="v" id="tCo2">–</div><div class="s" id="tCo2S">–</div></div>
+    <div class="tile"><div class="l">Targets on track</div><div class="v" id="tTrack">–</div><div class="s">Based on set thresholds</div></div>
+  </div>
+
+  <div class="bar">
+    <span class="chip on" data-f="all" onclick="setF(this)">All SDGs</span>
+    <span class="chip" data-f="live" onclick="setF(this)">Live from IoT</span>
+    <span class="chip" data-f="per" onclick="setF(this)">Periodic entries</span>
+    <span class="chip" data-f="env" onclick="setF(this)">Environment</span>
+    <span class="chip" data-f="soc" onclick="setF(this)">Social and partnerships</span>
+    <div class="legend"><span class="lv">Live IoT data</span><span class="pd">Periodic manual entry</span></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>Goal and target wording: United Nations 2030 Agenda for Sustainable Development. BlueVerse's SDG contribution is self-assessed. It isn't certified or endorsed by the United Nations.</footer>
+
+<div class="overlay" id="ov" onclick="if(event.target===this)closeP()">
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+const S={washes:12480,kwhPerWash:0.31,grid:0.4047,treatedPerWash:160,recRate:0.82,
+ sludgeCol:1380,sludgeDis:1240,machines:46,uptime:97.2,
+ q:{ph:7.4,tds:1450,tss:42,cod:118,og:4.1},
+ trained:186,drives:12,upskilled:64,hours:512,sessions:9,oems:3,dealers:128,reports:4};
+const LIM={ph:[6.5,8.5],tds:2100,tss:100,cod:250,og:10};
+const fmt=(n,d=0)=>Number(n).toLocaleString('en-IN',{maximumFractionDigits:d,minimumFractionDigits:d});
+const ML=l=>l>=1e6?fmt(l/1e6,2)+' ML':fmt(l/1000,1)+' kL';
+const trend=()=>Array.from({length:12},(_,i)=>40+Math.round(30*Math.sin(i/2)+Math.random()*20+i*2));
+
+function calc(){
+ const treated=S.washes*S.treatedPerWash, rec=treated*S.recRate, fresh=treated-rec;
+ const kwh=S.washes*S.kwhPerWash, co2=kwh*S.grid;
+ const qok=[S.q.ph>=LIM.ph[0]&&S.q.ph<=LIM.ph[1],S.q.tds<=LIM.tds,S.q.tss<=LIM.tss,S.q.cod<=LIM.cod,S.q.og<=LIM.og].filter(Boolean).length;
+ const codAvoided=treated*(600-S.q.cod)/1e6;
+ return {treated,rec,fresh,kwh,co2,qok,codAvoided,disRate:S.sludgeDis/S.sludgeCol,stored:S.sludgeCol-S.sludgeDis,freshPerWash:fresh/S.washes};
+}
+
+const SDG=[
+ {n:3,name:"Good health and well-being",cat:"env",src:"live",
+  targets:["3.9 Reduce deaths and illnesses from hazardous chemicals and from air, water and soil pollution"],
+  sol:"Wastewater from washing is treated and reused instead of being released into the environment.",
+  kpi:c=>ML(c.treated)+" treated",sub:c=>"Untreated discharge avoided · COD load avoided "+fmt(c.codAvoided)+" kg",
+  status:c=>c.qok===5?"ok":"watch",
+  metrics:c=>[["Wastewater treated",ML(c.treated)],["COD load avoided",fmt(c.codAvoided)+" kg"],["Water quality parameters within limit",c.qok+" of 5"]],
+  method:"Treated volume = recycled + fresh water from every wash. COD load avoided compares a typical raw wash-water COD (demo assumption, to be replaced with the baseline lab value) with the measured treated COD.",
+  ev:["Monthly lab report – October","Monthly lab report – November"]},
+ {n:4,name:"Quality education",cat:"soc",src:"per",
+  targets:["4.3 Ensure equal access for all women and men to affordable, quality technical and vocational education"],
+  sol:"Adults and youth trained on BlueVerse technology; water-conservation awareness drives for communities and customers.",
+  kpi:()=>fmt(S.trained)+" people trained",sub:()=>fmt(S.drives)+" awareness drives this period",
+  status:()=>S.trained>=150?"ok":"watch",
+  metrics:()=>[["People trained",fmt(S.trained)],["Awareness drives",fmt(S.drives)],["Sites covered","38"]],
+  method:"Entered by site teams through the Social activity entry form, with attendance sheet or photo as evidence.",
+  ev:["Training attendance – Pune cluster","Awareness drive photos – Ahmedabad"]},
+ {n:6,name:"Clean water and sanitation",cat:"env",src:"live",
+  targets:["6.3 Improve water quality, halve untreated wastewater and increase recycling and safe reuse","6.4 Increase water-use efficiency and ensure sustainable freshwater withdrawals"],
+  sol:"Water recycling at every wash, with treated-water quality monitored against limits.",
+  kpi:()=>Math.round(S.recRate*100)+"% recycled",sub:c=>ML(c.rec)+" recycled · quality "+c.qok+"/5 within limits",
+  status:c=>S.recRate>=0.8&&c.qok===5?"ok":"watch",
+  metrics:c=>[["Treated water",ML(c.treated)],["Recycled water",ML(c.rec)],["Fresh water",ML(c.fresh)],["Recycle rate",Math.round(S.recRate*100)+"%"],["pH",S.q.ph.toFixed(1)+" (6.5–8.5)"],["TDS",fmt(S.q.tds)+" mg/L (≤2,100)"],["TSS",fmt(S.q.tss)+" mg/L (≤100)"],["COD",fmt(S.q.cod)+" mg/L (≤250)"],["Oil and grease",S.q.og.toFixed(1)+" mg/L (≤10)"]],
+  method:"Treated water = recycled + fresh, from IoT meters on each machine. Quality from sensor readings, confirmed by monthly NABL lab reports.",
+  ev:["Monthly lab report – November","Meter calibration certificate"]},
+ {n:8,name:"Decent work and economic growth",cat:"soc",src:"per",
+  targets:["8.2 Achieve higher productivity through diversification, technological upgrading and innovation"],
+  sol:"Employee upskilling through technology-based wash operations.",
+  kpi:()=>fmt(S.upskilled)+" staff upskilled",sub:()=>fmt(S.hours)+" training hours",
+  status:()=>"ok",
+  metrics:()=>[["Staff upskilled",fmt(S.upskilled)],["Training hours",fmt(S.hours)],["Certified operators","41"]],
+  method:"From HR training records, entered monthly.",ev:["Training register – November"]},
+ {n:9,name:"Industry, innovation and infrastructure",cat:"env",src:"live",
+  targets:["9.4 Upgrade infrastructure and retrofit industries with resource-efficient, clean technologies"],
+  sol:"IoT-connected, resource-efficient washing systems at dealerships and outlets.",
+  kpi:()=>S.machines+" machines live",sub:()=>"Uptime "+S.uptime.toFixed(1)+"% · "+S.kwhPerWash.toFixed(2)+" kWh per wash",
+  status:()=>S.uptime>=95?"ok":"watch",
+  metrics:c=>[["Connected machines",S.machines],["Uptime",S.uptime.toFixed(1)+"%"],["Electricity",fmt(c.kwh)+" kWh"],["Energy per wash",S.kwhPerWash.toFixed(2)+" kWh"]],
+  method:"Machine status and runtime from IoT gateways; uptime = machine run time ÷ scheduled hours.",ev:["Device list export"]},
+ {n:11,name:"Sustainable cities and communities",cat:"env",src:"live",
+  targets:["11.6 Reduce the adverse per-capita environmental impact of cities, including municipal and other waste management"],
+  sol:"Sludge waste management and water recycling in urban sites.",
+  kpi:c=>ML(c.rec)+" kept from drains",sub:c=>fmt(S.sludgeDis)+" kg sludge disposed safely",
+  status:c=>c.disRate>=0.85?"ok":"watch",
+  metrics:c=>[["Wastewater recycled",ML(c.rec)],["Sludge collected",fmt(S.sludgeCol)+" kg"],["Sludge disposed",fmt(S.sludgeDis)+" kg"],["Urban sites","38"]],
+  method:"Recycled volume from IoT meters; sludge from the sludge ledger with disposal manifests.",ev:["Disposal manifest – November","Agency authorisation"]},
+ {n:12,name:"Responsible consumption and production",cat:"env",src:"live",
+  targets:["12.2 Sustainable management and efficient use of natural resources","12.4 Environmentally sound management of chemicals and all wastes","12.5 Reduce waste through prevention, reduction, recycling and reuse","12.6 Encourage companies to adopt sustainable practices and report sustainability information"],
+  sol:"Responsible water use, waste mindfulness and ESG reporting support for OEMs.",
+  kpi:c=>Math.round(c.disRate*100)+"% sludge disposed",sub:c=>fmt(c.stored)+" kg stored · "+fmt(c.freshPerWash,0)+" L fresh water per wash",
+  status:c=>c.disRate>=0.9?"ok":"watch",
+  metrics:c=>[["Fresh water per wash",fmt(c.freshPerWash,0)+" L"],["Sludge collected",fmt(S.sludgeCol)+" kg"],["Sludge disposed",fmt(S.sludgeDis)+" kg"],["Sludge stored",fmt(c.stored)+" kg"],["ESG reports issued to OEMs",S.reports]],
+  method:"Status turns to Watch when stored sludge is more than 10% of collected. Report count from ESG report downloads.",ev:["Sludge ledger export","Disposal certificate – Q2"]},
+ {n:13,name:"Climate action",cat:"env",src:"live",
+  targets:["13.3 Improve education, awareness and capacity on climate change mitigation and adaptation"],
+  sol:"Water conservation and waste management, with awareness and sensitisation sessions.",
+  kpi:c=>fmt(c.co2/1000,2)+" t CO₂",sub:c=>fmt(c.co2/S.washes,2)+" kg per wash · "+S.sessions+" awareness sessions",
+  status:c=>c.co2/S.washes<0.4?"ok":"watch",
+  metrics:c=>[["CO₂ emitted",fmt(c.co2)+" kg"],["CO₂ per wash",fmt(c.co2/S.washes,2)+" kg"],["Grid factor",S.grid+" kg/kWh"],["Awareness sessions",S.sessions]],
+  method:"CO₂ = electricity (kWh) × country grid factor. Efficient band below 0.40 kg per wash. Sessions from manual entries.",ev:["Session register – November"]},
+ {n:14,name:"Life below water",cat:"env",src:"live",
+  targets:["14.1 Prevent and significantly reduce marine pollution of all kinds, in particular from land-based activities, including nutrient pollution"],
+  sol:"Oil, grease and organic load kept out of drains and water bodies, avoiding eutrophication.",
+  kpi:()=>"O&G "+S.q.og.toFixed(1)+" mg/L",sub:()=>"Limit 10 mg/L · COD "+S.q.cod+" mg/L",
+  status:()=>S.q.og<=LIM.og&&S.q.cod<=LIM.cod?"ok":"risk",
+  metrics:c=>[["Oil and grease",S.q.og.toFixed(1)+" mg/L"],["COD",S.q.cod+" mg/L"],["COD load avoided",fmt(c.codAvoided)+" kg"]],
+  method:"From treated-water quality readings and lab reports.",ev:["Monthly lab report – November"]},
+ {n:15,name:"Life on land",cat:"env",src:"live",
+  targets:["15.1 Ensure conservation and sustainable use of terrestrial and inland freshwater ecosystems"],
+  sol:"Reduced freshwater withdrawal from local sources.",
+  kpi:c=>ML(c.rec)+" fresh water saved",sub:c=>"Only "+ML(c.fresh)+" fresh water drawn",
+  status:()=>"ok",
+  metrics:c=>[["Fresh water saved",ML(c.rec)],["Fresh water drawn",ML(c.fresh)]],
+  method:"Fresh water saved = recycled water that would otherwise be drawn as fresh.",ev:["Meter data export"]},
+ {n:17,name:"Partnerships for the goals",cat:"soc",src:"per",
+  targets:["17.17 Encourage effective public, public-private and civil society partnerships"],
+  sol:"Global and local partnerships with OEMs, dealerships and institutions.",
+  kpi:()=>S.oems+" OEMs · "+S.dealers+" dealerships",sub:()=>"Active partnership agreements",
+  status:()=>"ok",
+  metrics:()=>[["OEM partners",S.oems],["Dealerships",S.dealers],["Institutional partners","2"]],
+  method:"From partnership records, updated when agreements are signed.",ev:["Partner list"]}
+];
+const IC={
+3:'<path d="M9 4h6v5h5v6h-5v5H9v-5H4V9h5z"/>',
+4:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v5"/>',
+6:'<path d="M12 3C12 3 5 11 5 15a7 7 0 0 0 14 0C19 11 12 3 12 3z"/><path d="M9 15a3 3 0 0 0 3 3"/>',
+8:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/><path d="M3 13h18"/>',
+9:'<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/>',
+11:'<path d="M3 21h18"/><rect x="5" y="9" width="6" height="12"/><rect x="13" y="4" width="6" height="17"/><path d="M7.5 12h1M7.5 15h1M15.5 7h1M15.5 10h1M15.5 13h1"/>',
+12:'<path d="M4 12a8 8 0 0 1 14-5.3"/><path d="M18 3v4h-4"/><path d="M20 12a8 8 0 0 1-14 5.3"/><path d="M6 21v-4h4"/>',
+13:'<path d="M10 4a2 2 0 0 1 4 0v10.5a4 4 0 1 1-4 0z"/><path d="M12 10v6"/>',
+14:'<path d="M2 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 13c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',
+15:'<path d="M5 19C5 10 11 5 20 4c-1 9-6 15-15 15z"/><path d="M5 19l8-8"/>',
+17:'<rect x="2" y="9" width="11" height="6" rx="3"/><rect x="11" y="9" width="11" height="6" rx="3"/>'};
+const iconHTML=g=>`<div class="icon ${g.src==='per'?'per':''}"><span class="num">${g.n}</span><svg viewBox="0 0 24 24" aria-hidden="true">${IC[g.n]}</svg></div>`;
+const ST={ok:"On track",watch:"Watch",risk:"Action needed"};
+let F="all";
+SDG.forEach(g=>g.tr=trend());
+
+function spark(arr,col){const w=200,h=36,mx=Math.max(...arr),mn=Math.min(...arr);
+ const p=arr.map((v,i)=>(i*(w/(arr.length-1))).toFixed(1)+","+(h-4-((v-mn)/(mx-mn||1))*(h-8)).toFixed(1)).join(" ");
+ return `<svg class="spark" width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${col}" stroke-width="2" points="${p}"/></svg>`;}
+
+function render(flash){
+ const c=calc(); let on=0;
+ const html=SDG.filter(g=>F==="all"||g.src===F||g.cat===F).map(g=>{
+  const st=g.status(c); return `<div class="card" onclick="openP(${g.n})">
+   ${iconHTML(g)}
+   <div class="cbody"><div class="ctop"><div><div class="gname">SDG ${g.n} · ${g.name}</div><div class="tg">Targets ${g.targets.map(t=>t.split(" ")[0]).join(", ")}</div></div><span class="badge ${st}">${ST[st]}</span></div>
+   <div class="kpi ${flash&&g.src==='live'?'flash':''}">${g.kpi(c)}</div><div class="ksub">${g.sub(c)}</div>
+   ${spark(g.tr,g.src==='live'?'#1E6FD9':'#8E7CC3')}
+   <span class="src ${g.src}">${g.src==='live'?'Live IoT data':'Periodic entry'}</span></div></div>`}).join("");
+ document.getElementById("grid").innerHTML=html;
+ SDG.forEach(g=>{if(g.status(c)==="ok")on++});
+ const set=(id,v)=>{const e=document.getElementById(id);e.textContent=v;if(flash){e.classList.add("flash");setTimeout(()=>e.classList.remove("flash"),700)}};
+ set("tWash",fmt(S.washes)); set("tRec",ML(c.rec)); document.getElementById("tRecS").textContent=Math.round(S.recRate*100)+"% of treated water";
+ set("tCo2",fmt(c.co2/1000,2)+" t"); document.getElementById("tCo2S").textContent=fmt(c.co2/S.washes,2)+" kg per wash";
+ set("tTrack",on+" of "+SDG.length);
+ if(flash)setTimeout(()=>document.querySelectorAll(".kpi.flash").forEach(e=>e.classList.remove("flash")),700);
+}
+function setF(el){document.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));el.classList.add("on");F=el.dataset.f;render()}
+function scope(){document.getElementById("scopeLbl").textContent="Monitoring: "+fCo.value+" · "+(fSt.value==="All states"?"India":fSt.value)+" · "+fSeg.value+" · "+fDt.value;
+ const k={"Month to date":1,"Last 7 days":0.25,"Quarter to date":2.6,"Financial year to date":7.8}[fDt.value]*(fCo.value==="All companies"?1:0.35)*(fSt.value==="All states"?1:0.4)*(fSeg.value==="B2B and B2C"?1:0.55);
+ S.washes=Math.round(12480*k);S.sludgeCol=Math.round(1380*k);S.sludgeDis=Math.round(1240*k);S.machines=Math.max(3,Math.round(46*Math.min(1,k)));render(true)}
+
+function openP(n){const g=SDG.find(x=>x.n===n),c=calc(),st=g.status(c);
+ document.getElementById("panel").innerHTML=`<button class="close" onclick="closeP()" aria-label="Close">×</button>
+ <div class="phead">${iconHTML(g)}
+ <div><h2>SDG ${g.n} · ${g.name}</h2><div style="margin-top:6px"><span class="badge ${st}">${ST[st]}</span> <span class="src ${g.src}">${g.src==='live'?'Live IoT data':'Periodic entry'}</span></div>
+ <div style="font-size:13.5px;color:var(--grey);margin-top:6px">BlueVerse contribution: ${g.sol}</div></div></div>
+ <div class="sec"><h3>UN targets mapped</h3><div class="targets">${g.targets.map(t=>`<div>${t}</div>`).join("")}</div></div>
+ <div class="sec"><h3>Current performance</h3><div class="mgrid">${g.metrics(c).map(m=>`<div class="m"><div class="l">${m[0]}</div><div class="v">${m[1]}</div></div>`).join("")}</div></div>
+ <div class="sec"><h3>Trend (last 12 periods)</h3>${spark(g.tr,g.src==='live'?'#1E6FD9':'#8E7CC3').replace('height="36"','height="90"').replace('0 0 200 36','0 0 200 36')}</div>
+ <div class="sec"><h3>How it's calculated</h3><div class="method">${g.method}</div></div>
+ <div class="sec"><h3>Evidence</h3><table><tr><th>Document</th><th>Date</th><th></th></tr>${g.ev.map((e,i)=>`<tr><td>${e}</td><td>${['15 Nov 2026','02 Nov 2026'][i%2]}</td><td><a class="dl" href="#" onclick="return false">Download</a></td></tr>`).join("")}</table></div>`;
+ document.getElementById("ov").classList.add("open");}
+function closeP(){document.getElementById("ov").classList.remove("open")}
+function openEntry(){document.getElementById("panel").innerHTML=`<button class="close" onclick="closeP()" aria-label="Close">×</button>
+ <h2>Social activity entry</h2><p style="font-size:13.5px;color:var(--grey)">For SDGs that aren't measured by machines: 4, 8, 13 and 17. Site teams enter these; the dashboard updates immediately.</p>
+ <form onsubmit="return saveEntry(event)"><div class="row">
+ <div><label style="font-size:12.5px;color:var(--grey)">Activity type</label><select id="eT" style="width:100%"><option value="trained">Technology training (SDG 4)</option><option value="drives">Awareness drive (SDG 4)</option><option value="upskilled">Staff upskilling (SDG 8)</option><option value="sessions">Climate awareness session (SDG 13)</option><option value="dealers">New dealership partner (SDG 17)</option></select></div>
+ <div><label style="font-size:12.5px;color:var(--grey)">Date</label><input type="date" value="2026-11-19"></div>
+ <div><label style="font-size:12.5px;color:var(--grey)">Site</label><select style="width:100%"><option>Pune – Hero dealership</option><option>Ahmedabad – B2C outlet</option></select></div>
+ <div><label style="font-size:12.5px;color:var(--grey)">Number</label><input id="eN" type="number" min="1" value="10"></div></div>
+ <div class="row"><div><label style="font-size:12.5px;color:var(--grey)">Evidence (attendance sheet or photo)</label><input type="file"></div></div>
+ <button class="btn primary" type="submit">Save entry</button><span class="ok-msg" id="eMsg"></span></form>`;
+ document.getElementById("ov").classList.add("open");}
+function saveEntry(e){e.preventDefault();const k=eT.value,n=Math.max(1,parseInt(eN.value)||1);S[k]+=(k==="drives"||k==="sessions"||k==="dealers")?1:n;
+ document.getElementById("eMsg").textContent="Saved. Dashboard updated.";render(true);return false}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeP()});
+
+render();
+let last=Date.now();
+setInterval(()=>{const add=3+Math.floor(Math.random()*6);S.washes+=add;
+ S.q.ph=+(7.2+Math.random()*0.4).toFixed(1);S.q.tds=1380+Math.round(Math.random()*150);S.q.cod=105+Math.round(Math.random()*25);S.q.og=+(3.4+Math.random()*1.4).toFixed(1);
+ S.recRate=+(0.81+Math.random()*0.02).toFixed(3);SDG.forEach(g=>{if(g.src==='live'){g.tr.shift();g.tr.push(g.tr[g.tr.length-1]+Math.round(Math.random()*10-4))}});
+ last=Date.now();render(true)},5000);
+setInterval(()=>{const s=Math.round((Date.now()-last)/1000);document.getElementById("upd").textContent="Live · updated "+(s<2?"just now":s+" s ago")},1000);
+</script>
+</body>
+</html>
